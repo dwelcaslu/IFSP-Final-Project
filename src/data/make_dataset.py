@@ -3,7 +3,6 @@ from pathlib import Path
 import random
 import shutil
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -12,15 +11,15 @@ from PIL import Image
 import pydicom as dicom
 
 
-# In our project we’ll be working with medical images from different sources, emulating a 
-# scenario with multiple hospitals. Many datasets are currently available on the internet, 
-# and websites like Kaggle are a great source of data and other resources. 
+# In our project we’ll be working with medical images from different sources, emulating a
+# scenario with multiple hospitals. Many datasets are currently available on the internet,
+# and websites like Kaggle are a great source of data and other resources.
 # For this project, we found two datasets from different sources, both available on Kaggle:
 # Chest X-Ray Images (Pneumonia): https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia
 # RSNA Pneumonia Detection Challenge: https://www.kaggle.com/competitions/rsna-pneumonia-detection-challenge
-# Both datasets are composed of x-ray images of the patient's lungs and are labeled as normal 
-# or with pneumonia. The different datasets can be used as data from different sources 
-# (hospitals) but have the same goal: finding the patient's health condition 
+# Both datasets are composed of x-ray images of the patient's lungs and are labeled as normal
+# or with pneumonia. The different datasets can be used as data from different sources
+# (hospitals) but have the same goal: finding the patient's health condition
 # (normal or with pneumonia) from x-ray images.
 
 
@@ -30,6 +29,7 @@ IMG_SIZE_PROCESSED = (256, 256)
 N_SAMPLES_SPLIT = 5000
 RANDOM_STATE_SEED = 42
 SPLITS_NAMES = 'imgs_data'
+TEST_SIZE = 0.2
 
 
 def main(data_dir):
@@ -120,7 +120,7 @@ def make_interim_dataset(raw_data_dir, interim_data_dir):
 
 
 def make_processed_dataset(interim_data_dir, processed_data_dir, n_samples=N_SAMPLES_SPLIT,
-                           img_size=IMG_SIZE_PROCESSED, test_size=0.2,
+                           img_size=IMG_SIZE_PROCESSED, test_size=TEST_SIZE,
                            splits_names = SPLITS_NAMES):
     """
     Transforming the interim data in the final version:
