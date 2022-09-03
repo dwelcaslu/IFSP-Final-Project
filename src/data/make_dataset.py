@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from PIL import Image
-import pydicom as dicom
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -75,9 +74,7 @@ def make_interim_dataset(raw_data_dir, interim_data_dir):
         data03 = data03.sort_values(by='Image Index')
         data03['img_filepath'] = df['img_filepath']
         data03['ID'] = data03['Patient ID']
-        data03['target'] = data03['Finding Labels']
-        data03.loc[data03.index[data03['Finding Labels'] == 'No Finding'], 'target'] = 0
-        data03.loc[data03.index[data03['Finding Labels'] != 'No Finding'], 'target'] = 1
+        data03['target'] = data03['Finding Labels'].apply(lambda x: 1 if x != 'No Finding' else 0)
         data03 = data03.drop(columns=['Finding Labels', 'Patient ID'])
         base03_csv_filepath = os.path.join(interim_data_dir, f'{base03_name}.csv')
         data03.to_csv(base03_csv_filepath, index=False)
@@ -104,8 +101,7 @@ def make_processed_dataset(interim_data_dir, processed_data_dir, n_splits=N_SPLI
         df = pd.read_csv(dtbase_csv_path)
         unique_ids = pd.DataFrame({"ID": df['ID'].unique()})
         n_ids_per_split = int(unique_ids.shape[0]/n_splits)
-        print(dtbase, 'nº of splits:', n_splits, '\nunique IDs:', unique_ids.shape[0],
-              '\nIDs per split:', n_ids_per_split, '\n')
+        print(dtbase, 'nº of splits:', n_splits, '\nunique IDs:', unique_ids.shape[0], '\nIDs per split:', n_ids_per_split, '\n')
 
         for _ in range(n_splits):
             split_number += 1
