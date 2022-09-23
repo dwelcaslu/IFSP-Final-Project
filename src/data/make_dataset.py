@@ -30,7 +30,12 @@ IMG_SIZE_PROCESSED = (224, 224)
 N_SPLITS = 5
 SPLITS_NAMES = 'imgs_data'
 TEST_SIZE = 0.2
+VALID_SIZE = 0.25
 RANDOM_STATE_SEED = 42
+N_ROUNDS = 5
+ROUNDS_DIST = [0.4, 0.15, 0.15, 0.15, 0.15]
+CLASSES_LABELS = ['No Finding', 'Sick']
+TARGET_DICT = {CLASSES_LABELS[i]: i for i in range(len(CLASSES_LABELS))}
 
 
 def main(data_dir):
@@ -74,7 +79,7 @@ def make_interim_dataset(raw_data_dir, interim_data_dir):
         data03 = data03.sort_values(by='Image Index')
         data03['img_filepath'] = df['img_filepath']
         data03['ID'] = data03['Patient ID']
-        data03['target'] = data03['Finding Labels'].apply(lambda x: 1 if x != 'No Finding' else 0)
+        data03['target'] = data03['Finding Labels'].apply(lambda x: TARGET_DICT['No Finding'] if x == 'No Finding' else TARGET_DICT['Sick'])
         data03 = data03.drop(columns=['Finding Labels', 'Patient ID'])
         base03_csv_filepath = os.path.join(interim_data_dir, f'{base03_name}.csv')
         data03.to_csv(base03_csv_filepath, index=False)
@@ -82,8 +87,9 @@ def make_interim_dataset(raw_data_dir, interim_data_dir):
 
 
 def make_processed_dataset(interim_data_dir, processed_data_dir, n_splits=N_SPLITS,
-                           img_size=IMG_SIZE_PROCESSED, test_size=TEST_SIZE,
-                           splits_names = SPLITS_NAMES):
+                           test_size=TEST_SIZE, valid_size=VALID_SIZE,
+                           splits_names = SPLITS_NAMES,
+                           n_rounds=N_ROUNDS, rounds_dist=ROUNDS_DIST):
     """
     Transforming the interim data in the final version:
     - splitting the databases into different hospital folders
@@ -118,21 +124,39 @@ def make_processed_dataset(interim_data_dir, processed_data_dir, n_splits=N_SPLI
             for filepath in df_split['img_filepath']:
                 new_filepath = os.path.join(dtbase_csv_path, filepath.split('/')[-1])
                 image = Image.open(filepath)
-                image = image.resize(size=img_size)
+                image = img_transform(image)
                 image.save(new_filepath)
                 img_filepath_new.append(new_filepath.replace('\\', '/'))
             df_split.loc[:, 'img_filepath'] = img_filepath_new
             # Splitting data into train and test:
             samplelist = df_split["ID"].unique()
             training_samp, test_samp = train_test_split(samplelist, test_size=test_size, random_state=RANDOM_STATE_SEED)
+            training_samp, valid_samp = train_test_split(training_samp, test_size=valid_size, random_state=RANDOM_STATE_SEED)
             df_split_train = df_split[df_split['ID'].isin(training_samp)]
             df_split_train.loc[:, 'split'] = 'train'
+            df_split_valid = df_split[df_split['ID'].isin(valid_samp)]
+            df_split_valid.loc[:, 'split'] = 'valid'
             df_split_test = df_split[df_split['ID'].isin(test_samp)]
             df_split_test.loc[:, 'split'] = 'test'
-            df_split = pd.concat([df_split_train, df_split_test])[['ID', 'img_filepath', 'split', 'target']]
-            df_split = df_split.sort_values(by='ID').reset_index(drop=True)
+            df_split = pd.concat([df_split_train, df_split_valid, df_split_test])
+            df_split = df_split.sort_values(by=['ID', 'Follow-up #']).reset_index(drop=True)
+            # Setting the Federated round number:
+            df_split_count = df_split.groupby('ID').count()
+            round_number = []
+            for f_ups in df_split_count['Follow-up #'].values:
+                round_number_per_id = np.sort(np.random.choice([i+1 for i in range(n_rounds)],
+                                                               f_ups, p=rounds_dist))
+                round_number = np.concatenate((round_number, round_number_per_id))
+            df_split['round_number'] = round_number.astype(int)
+
+            df_split = df_split[['ID', 'img_filepath', 'split', 'round_number', 'target']]
             df_split.to_csv(f'{dtbase_csv_path}.csv', index=False)
             print(f'Saved {df_split.shape[0]} images in {dtbase_csv_path}')
+
+
+def img_transform(img, img_size=IMG_SIZE_PROCESSED):
+    img_transf = img.resize(size=img_size)
+    return img_transf
 
 
 def reset_random_seeds(seed=RANDOM_STATE_SEED):
