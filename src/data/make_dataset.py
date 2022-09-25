@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import shutil
@@ -37,6 +38,19 @@ ROUNDS_DIST = [0.4, 0.15, 0.15, 0.15, 0.15]
 CLASSES_LABELS = ['No Finding', 'Sick']
 TARGET_DICT = {CLASSES_LABELS[i]: i for i in range(len(CLASSES_LABELS))}
 
+METADATA = {'BASE_NAMES': BASE_NAMES,
+            'IMG_SIZE_PROCESSED': IMG_SIZE_PROCESSED,
+            'N_SPLITS': N_SPLITS,
+            'SPLITS_NAMES': SPLITS_NAMES,
+            'TEST_SIZE': TEST_SIZE,
+            'VALID_SIZE': VALID_SIZE,
+            'RANDOM_STATE_SEED': RANDOM_STATE_SEED,
+            'N_ROUNDS': N_ROUNDS,
+            'ROUNDS_DIST': ROUNDS_DIST,
+            'CLASSES_LABELS': CLASSES_LABELS,
+            'TARGET_DICT': TARGET_DICT,
+            }
+
 
 def main(data_dir):
     """ Runs data processing scripts to turn raw data from (../raw) into
@@ -52,6 +66,11 @@ def main(data_dir):
 
     print('\nMaking processed dataset from interim data...')
     make_processed_dataset(interim_data_dir, processed_data_dir)
+    print('done!')
+
+    print('\nSaving metadata...')
+    with open(f'{processed_data_dir}/metadata.json', 'w') as fp:
+        json.dump(METADATA, fp)
     print('done!')
 
 
@@ -156,6 +175,17 @@ def make_processed_dataset(interim_data_dir, processed_data_dir, n_splits=N_SPLI
 
 def img_transform(img, img_size=IMG_SIZE_PROCESSED):
     img_transf = img.resize(size=img_size)
+    # image = Image.open(self.image_names[index])
+    # normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    # preprocess = transforms.Compose([
+    #     transforms.Resize(256),
+    #     transforms.TenCrop(224),
+    #     transforms.Lambda
+    #     (lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])),
+    #     transforms.Lambda
+    #     (lambda crops: torch.stack([normalize(crop) for crop in crops]))
+    # ])
+    # image = preprocess(image)
     return img_transf
 
 
