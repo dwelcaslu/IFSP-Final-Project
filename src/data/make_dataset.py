@@ -35,8 +35,7 @@ VALID_SIZE = 0.25
 RANDOM_STATE_SEED = 42
 N_ROUNDS = 5
 ROUNDS_DIST = [0.4, 0.15, 0.15, 0.15, 0.15]
-CLASSES_LABELS = ['No Finding', 'Sick']
-TARGET_DICT = {CLASSES_LABELS[i]: i for i in range(len(CLASSES_LABELS))}
+
 
 METADATA = {'BASE_NAMES': BASE_NAMES,
             'IMG_SIZE_PROCESSED': IMG_SIZE_PROCESSED,
@@ -47,8 +46,6 @@ METADATA = {'BASE_NAMES': BASE_NAMES,
             'RANDOM_STATE_SEED': RANDOM_STATE_SEED,
             'N_ROUNDS': N_ROUNDS,
             'ROUNDS_DIST': ROUNDS_DIST,
-            'CLASSES_LABELS': CLASSES_LABELS,
-            'TARGET_DICT': TARGET_DICT,
             }
 
 
@@ -98,7 +95,7 @@ def make_interim_dataset(raw_data_dir, interim_data_dir):
         data03 = data03.sort_values(by='Image Index')
         data03['img_filepath'] = df['img_filepath']
         data03['ID'] = data03['Patient ID']
-        data03['target'] = data03['Finding Labels'].apply(lambda x: TARGET_DICT['No Finding'] if x == 'No Finding' else TARGET_DICT['Sick'])
+        data03['class label'] = data03['Finding Labels']
         data03 = data03.drop(columns=['Finding Labels', 'Patient ID'])
         base03_csv_filepath = os.path.join(interim_data_dir, f'{base03_name}.csv')
         data03.to_csv(base03_csv_filepath, index=False)
@@ -142,8 +139,7 @@ def make_processed_dataset(interim_data_dir, processed_data_dir, n_splits=N_SPLI
             img_filepath_new = []
             for filepath in df_split['img_filepath']:
                 new_filepath = os.path.join(dtbase_csv_path, filepath.split('/')[-1])
-                image = Image.open(filepath)
-                image = img_transform(image)
+                image = img_transform(filepath)
                 image.save(new_filepath)
                 img_filepath_new.append(new_filepath.replace('\\', '/'))
             df_split.loc[:, 'img_filepath'] = img_filepath_new
@@ -168,24 +164,14 @@ def make_processed_dataset(interim_data_dir, processed_data_dir, n_splits=N_SPLI
                 round_number = np.concatenate((round_number, round_number_per_id))
             df_split['round_number'] = round_number.astype(int)
 
-            df_split = df_split[['ID', 'img_filepath', 'split', 'round_number', 'target']]
+            df_split = df_split[['ID', 'img_filepath', 'split', 'round_number', 'class label']]
             df_split.to_csv(f'{dtbase_csv_path}.csv', index=False)
             print(f'Saved {df_split.shape[0]} images in {dtbase_csv_path}')
 
 
-def img_transform(img, img_size=IMG_SIZE_PROCESSED):
+def img_transform(filepath, img_size=IMG_SIZE_PROCESSED):
+    img = Image.open(filepath)
     img_transf = img.resize(size=img_size)
-    # image = Image.open(self.image_names[index])
-    # normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    # preprocess = transforms.Compose([
-    #     transforms.Resize(256),
-    #     transforms.TenCrop(224),
-    #     transforms.Lambda
-    #     (lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])),
-    #     transforms.Lambda
-    #     (lambda crops: torch.stack([normalize(crop) for crop in crops]))
-    # ])
-    # image = preprocess(image)
     return img_transf
 
 
