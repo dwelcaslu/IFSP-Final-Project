@@ -53,6 +53,8 @@ def get_dataloaders(df, round_number):
     print('valid_set size:', valid_set.__len__())
     print('test_set size:', test_set.__len__())
     print('total:', train_set.__len__() + valid_set.__len__() + test_set.__len__())
+    db_sizes = {'train': train_set.__len__(), 'valid': valid_set.__len__(),
+                'test': test_set.__len__()}
 
     # Setting the dataloaders:
     train_dl = DataLoader(train_set, batch_size=16, shuffle=True)
@@ -60,7 +62,7 @@ def get_dataloaders(df, round_number):
     test_dl = DataLoader(test_set, batch_size=1, shuffle=False)
     dataloaders = {'train': train_dl, 'valid': valid_dl, 'test': test_dl}
 
-    return dataloaders
+    return dataloaders, db_sizes
 
 
 def train_model(model, dataloaders, device,
