@@ -29,7 +29,7 @@ warnings.filterwarnings("ignore")
 BASE_NAMES = ['nih-chest-xrays']
 IMG_SIZE_PROCESSED = (224, 224)
 N_SPLITS = 5
-SPLITS_NAMES = 'imgs_data'
+SPLITS_NAMES = 'site-'
 TEST_SIZE = 0.2
 VALID_SIZE = 0.25
 RANDOM_STATE_SEED = 42

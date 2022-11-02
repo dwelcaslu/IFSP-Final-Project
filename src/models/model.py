@@ -37,7 +37,7 @@ def get_model(n_classes=1, finetune=True, model_name=None, base_path='../../mode
             model.load_state_dict(torch.load(model_path))
             print(f'\n{model_name}.pth loaded successfully.')
         except FileNotFoundError:
-            print(f'\nFile Not Found: {model_name}. Model will start with default initialization.')
+            print(f'\nFile Not Found: {model_path}.\nModel will start with default initialization.')
     model = model.to(DEVICE)
     print(f'Cuda available: {torch.cuda.is_available()}. Model sent to device: {DEVICE}.')
     return model
