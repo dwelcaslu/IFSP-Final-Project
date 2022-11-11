@@ -16,13 +16,15 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class ChestXrayDataSet(Dataset):
-    def __init__(self, dataframe, split, round_number):
+    def __init__(self, dataframe, split, round_number, all_rounds=False):
         self.split = split
         self.round_number = round_number
         dataframe['target'] = dataframe["class label"].apply(lambda x: 0 if x == 'No Finding' else 1)
-        self.dataframe = dataframe[((dataframe['split'] == split) 
-                                    & (dataframe['round_number'] <= round_number))].reset_index(drop=True)
-
+        if all_rounds:
+            self.dataframe = dataframe[(dataframe['split'] == split)].reset_index(drop=True)
+        else:
+            self.dataframe = dataframe[((dataframe['split'] == split)
+                                        & (dataframe['round_number'] <= round_number))].reset_index(drop=True)
         self.image_paths = self.dataframe["img_filepath"].values
         self.targets = torch.FloatTensor(self.dataframe['target'].values)
         self.CLASSES_LABELS = ['Healthy', 'Sick']
@@ -44,11 +46,11 @@ class ChestXrayDataSet(Dataset):
         return image, self.targets[index]
 
 
-def get_dataloaders(df, round_number):
+def get_dataloaders(df, round_number, test_all_rounds=False):
 
     train_set = ChestXrayDataSet(df, 'train', round_number)
     valid_set = ChestXrayDataSet(df, 'valid', round_number)
-    test_set = ChestXrayDataSet(df, 'test', round_number)
+    test_set = ChestXrayDataSet(df, 'test', round_number, all_rounds=test_all_rounds)
     print('train_set size:', train_set.__len__())
     print('valid_set size:', valid_set.__len__())
     print('test_set size:', test_set.__len__())
