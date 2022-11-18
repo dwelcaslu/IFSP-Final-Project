@@ -54,21 +54,16 @@ def evaluate_model(model, dataloaders, split='test'):
         outputs = model(inputs)
         # _, preds = torch.max(outputs, 1)
         preds = outputs.round()
-        y_pred = np.vstack((y_pred, preds.cpu().detach().numpy()))      
-        y_true = np.vstack((y_true, labels.cpu().detach().numpy()))      
+        y_pred = np.vstack((y_pred, preds.cpu().detach().numpy()))
+        y_true = np.vstack((y_true, labels.cpu().detach().numpy()))
 
     y_pred = y_pred[1:, :]; y_true = y_true[1:, :]
     print(f'\nClassification report for {split} set:')
     print(classification_report(y_true, y_pred))
-    model_stats = {'accuracy_score': accuracy_score(y_true, y_pred),
-                   'balanced_accuracy_score': balanced_accuracy_score(y_true, y_pred),
-                   'recall_score': recall_score(y_true, y_pred),
-                   'precision_score': precision_score(y_true, y_pred),
-                   'f1_score': f1_score(y_true, y_pred),
-                   'confusion_matrix': confusion_matrix(y_true, y_pred),
-                #    'classification_report': classification_report(y_true, y_pred),
+    predictions = {'y_pred': y_pred.reshape(1, -1)[0].tolist(),
+                   'y_true': y_true.reshape(1, -1)[0].tolist(),
                    }
-    return model_stats
+    return predictions
 
 
 def save_model(model, model_name, base_path='../../models/'):
